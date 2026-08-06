@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+declare const __VERSION__: string;
+
 // DOM Elements
 const introOverlay = document.getElementById('intro-overlay')!;
 const bigPlayBtn = document.getElementById('big-play-btn')!;
@@ -707,4 +709,20 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Poll Spinitron every 10 seconds for updates
   setInterval(fetchNowPlaying, 10000);
+
+  // Append version badge in bottom-left corner
+  const versionBadge = document.createElement('div');
+  versionBadge.className = 'version-badge';
+  versionBadge.style.position = 'absolute';
+  versionBadge.style.bottom = '12px';
+  versionBadge.style.left = '16px';
+  versionBadge.style.fontSize = '0.62rem';
+  versionBadge.style.fontFamily = 'monospace';
+  versionBadge.style.color = 'rgba(255, 255, 255, 0.22)';
+  versionBadge.style.pointerEvents = 'none';
+  versionBadge.style.zIndex = '100';
+  versionBadge.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
+  versionBadge.style.letterSpacing = '0.03rem';
+  versionBadge.textContent = typeof __VERSION__ !== 'undefined' ? __VERSION__ : 'v1.1.unknown';
+  document.body.appendChild(versionBadge);
 });
