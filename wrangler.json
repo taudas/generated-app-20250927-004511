@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "wcbn-player",
+  "name": "default",
   "compatibility_date": "2026-08-05",
   "main": "./src/index.ts",
   "assets": {
