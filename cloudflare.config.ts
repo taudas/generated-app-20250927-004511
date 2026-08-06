@@ -7,4 +7,14 @@ export default defineWorker({
   name: "default",
   entrypoint,
   compatibilityDate: "2026-08-05",
+  routes: [
+    {
+      pattern: "wcbn.stream",
+      custom_domain: true,
+    },
+    {
+      pattern: "www.wcbn.stream",
+      custom_domain: true,
+    }
+  ],
 });

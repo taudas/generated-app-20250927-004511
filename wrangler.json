@@ -6,5 +6,15 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS"
-  }
+  },
+  "routes": [
+    {
+      "pattern": "wcbn.stream",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.wcbn.stream",
+      "custom_domain": true
+    }
+  ]
 }
