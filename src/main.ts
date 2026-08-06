@@ -719,10 +719,73 @@ window.addEventListener('DOMContentLoaded', () => {
   versionBadge.style.fontSize = '0.62rem';
   versionBadge.style.fontFamily = 'monospace';
   versionBadge.style.color = 'rgba(255, 255, 255, 0.22)';
-  versionBadge.style.pointerEvents = 'none';
+  versionBadge.style.pointerEvents = 'auto';
   versionBadge.style.zIndex = '100';
   versionBadge.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
   versionBadge.style.letterSpacing = '0.03rem';
   versionBadge.textContent = typeof __VERSION__ !== 'undefined' ? __VERSION__ : 'v1.1.unknown';
   document.body.appendChild(versionBadge);
+
+  // Style definitions for hover state and copyright snackbar
+  const customStyles = document.createElement('style');
+  customStyles.textContent = `
+    .version-badge {
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    .version-badge:hover {
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+    .copyright-snackbar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(40px);
+      background: rgba(22, 22, 29, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f0f0f5;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.02rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+      pointer-events: none;
+    }
+    .copyright-snackbar.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  `;
+  document.head.appendChild(customStyles);
+
+  // Add click handler to trigger the snackbar
+  let snackbarTimeout: any = null;
+  versionBadge.addEventListener('click', () => {
+    let snackbar = document.querySelector('.copyright-snackbar') as HTMLDivElement;
+    if (!snackbar) {
+      snackbar = document.createElement('div');
+      snackbar.className = 'copyright-snackbar';
+      snackbar.textContent = '©2026 Tony Audas';
+      document.body.appendChild(snackbar);
+    }
+
+    if (snackbarTimeout) {
+      clearTimeout(snackbarTimeout);
+    }
+
+    // Force reflow and show
+    snackbar.classList.remove('show');
+    void snackbar.offsetHeight;
+    snackbar.classList.add('show');
+
+    snackbarTimeout = setTimeout(() => {
+      snackbar.classList.remove('show');
+    }, 2500);
+  });
 });
