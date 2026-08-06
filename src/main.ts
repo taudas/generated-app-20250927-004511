@@ -788,4 +788,15 @@ window.addEventListener('DOMContentLoaded', () => {
       snackbar.classList.remove('show');
     }, 2500);
   });
+
+  // Register Service Worker for PWA support
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then((reg) => {
+        console.log('Service Worker registered successfully with scope:', reg.scope);
+      })
+      .catch((err) => {
+        console.warn('Service Worker registration failed:', err);
+      });
+  }
 });

@@ -1,0 +1,29 @@
+{
+  "name": "WCBN3DPLAYER",
+  "short_name": "WCBN3D",
+  "description": "3D Visual Live Player for WCBN-FM Ann Arbor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#16161d",
+  "theme_color": "#16161d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://www.wcbn.org/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "https://www.wcbn.org/wcbn_images/wcbn-logo-gray.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://www.wcbn.org/wcbn_images/wcbn-logo-gray.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
