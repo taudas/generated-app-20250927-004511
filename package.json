@@ -1,7 +1,7 @@
 {
   "name": "wcbn-player",
   "version": "1.0.0",
-  "description": "WCBN-FM 3D Audio Visualizer Player",
+  "description": "WCBN-FM 4D Audio Visualizer Player",
   "main": "index.js",
   "type": "module",
   "scripts": {
