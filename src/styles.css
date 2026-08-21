@@ -253,53 +253,52 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  width: 100%;
+  overflow: hidden;
+}
+
+.marquee-wrapper {
+  overflow: hidden;
+  width: 100%;
+}
+
+.track-text h2, .track-text p {
+  display: inline-block;
+  width: max-content;
+  white-space: nowrap;
+  transform: translate3d(0, 0, 0);
 }
 
 .track-text h2 {
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.01rem;
-  white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
   color: var(--text-primary);
-}
-.track-text h2::-webkit-scrollbar {
-  display: none;
 }
 
 .track-text p {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-secondary);
-  white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.track-text p::-webkit-scrollbar {
-  display: none;
 }
 
 .album-name {
   font-size: 0.75rem !important;
   color: #707082 !important;
-  white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.album-name::-webkit-scrollbar {
-  display: none;
 }
 
 .show-name {
   font-size: 0.75rem !important;
   color: #8a8a9a !important;
-  white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
-.show-name::-webkit-scrollbar {
-  display: none;
+
+@keyframes spotifyMarquee {
+  0%, 15% {
+    transform: translate3d(0, 0, 0);
+  }
+  85%, 100% {
+    transform: translate3d(var(--scroll-dist, 0px), 0, 0);
+  }
 }
 
 /* Playback Controls */

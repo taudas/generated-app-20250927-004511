@@ -352,6 +352,24 @@ function generateFauxCover(title: string, artist: string): string {
   return canvas.toDataURL('image/png');
 }
 
+// Helper to trigger Spotify/Apple-Music style marquee scrolling on text overflow
+function updateMarquee(element: HTMLElement) {
+  element.style.animation = 'none';
+  // Force a reflow
+  void element.offsetHeight;
+
+  const wrapper = element.parentElement;
+  if (!wrapper) return;
+
+  const overflow = element.scrollWidth - wrapper.clientWidth;
+  if (overflow > 0) {
+    element.style.setProperty('--scroll-dist', `-${overflow}px`);
+    // Constant speed of 20 pixels/second, minimum 6 seconds duration
+    const duration = Math.max(6, overflow / 20);
+    element.style.animation = `spotifyMarquee ${duration}s ease-in-out infinite alternate`;
+  }
+}
+
 // Spinitron API Polling
 async function fetchNowPlaying() {
   try {
@@ -508,6 +526,12 @@ async function fetchNowPlaying() {
 
         loadSphereTexture(textureUrl, !isFaux);
       }
+
+      // Update Marquee animations for all text elements based on text length overflow
+      updateMarquee(titleEl);
+      updateMarquee(artistEl);
+      updateMarquee(albumEl);
+      updateMarquee(showEl);
     }
   } catch (err) {
     console.warn('Could not retrieve Spinitron now-playing info:', err);
