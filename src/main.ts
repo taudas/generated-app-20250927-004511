@@ -27,6 +27,9 @@ let isMuted = false;
 let previousVolume = 0.8;
 let visualizerStyle = 0; // 0: Pulse Orb, 1: Tunnel of Lights, 2: Wireframe Wave
 let hasInitializedAudio = false;
+let lastPlaylistId: number | null = null;
+let currentShowName = "";
+let currentPersonaName = "";
 
 // Texture Loader & State
 const textureLoader = new THREE.TextureLoader();
@@ -362,11 +365,59 @@ async function fetchNowPlaying() {
       const titleEl = document.getElementById('track-title')!;
       const artistEl = document.getElementById('track-artist')!;
       const albumEl = document.getElementById('track-album')!;
+      const showEl = document.getElementById('track-show')!;
       const artEl = document.getElementById('track-art') as HTMLImageElement;
 
       const songTitle = currentTrack.song || 'Unknown Title';
       const songArtist = currentTrack.artist || 'Unknown Artist';
       const songAlbum = currentTrack.release || '';
+
+      // Fetch show and persona details if playlist_id changes
+      if (currentTrack.playlist_id) {
+        if (currentTrack.playlist_id !== lastPlaylistId) {
+          try {
+            const playlistResponse = await fetch(`/api/playlists/${currentTrack.playlist_id}`);
+            if (playlistResponse.ok) {
+              const playlistData = await playlistResponse.json();
+              currentShowName = playlistData.title || '';
+              
+              if (playlistData.persona_id) {
+                const personaResponse = await fetch(`/api/personas/${playlistData.persona_id}`);
+                if (personaResponse.ok) {
+                  const personaData = await personaResponse.json();
+                  currentPersonaName = personaData.name || '';
+                } else {
+                  currentPersonaName = '';
+                }
+              } else {
+                currentPersonaName = '';
+              }
+              lastPlaylistId = currentTrack.playlist_id;
+            }
+          } catch (e) {
+            console.warn('Could not fetch playlist or persona details:', e);
+          }
+        }
+
+        if (currentShowName || currentPersonaName) {
+          let showText = "";
+          if (currentShowName && currentPersonaName) {
+            showText = `Show: ${currentShowName} · DJ: ${currentPersonaName}`;
+          } else if (currentShowName) {
+            showText = `Show: ${currentShowName}`;
+          } else {
+            showText = `DJ: ${currentPersonaName}`;
+          }
+          if (showEl.textContent !== showText) {
+            showEl.textContent = showText;
+          }
+          showEl.classList.remove('hidden');
+        } else {
+          showEl.classList.add('hidden');
+        }
+      } else {
+        showEl.classList.add('hidden');
+      }
       
       // Determine if there is real album art from Spinitron
       const originalArtUrl = currentTrack.image;

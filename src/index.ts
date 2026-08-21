@@ -8,10 +8,16 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // Proxy request for Spinitron spins to bypass CORS
-    if (url.pathname === "/api/spins" || url.pathname.startsWith("/api/spins/")) {
+    // Proxy request for Spinitron to bypass CORS
+    const isSpinitronProxy = 
+      url.pathname === "/api/spins" || url.pathname.startsWith("/api/spins/") ||
+      url.pathname === "/api/playlists" || url.pathname.startsWith("/api/playlists/") ||
+      url.pathname === "/api/personas" || url.pathname.startsWith("/api/personas/") ||
+      url.pathname === "/api/shows" || url.pathname.startsWith("/api/shows/");
+
+    if (isSpinitronProxy) {
       try {
-        const targetUrl = "https://spinitron-proxy.d08jp15rftr3s.us-east-2.cs.amazonlightsail.com/api/spins";
+        const targetUrl = `https://spinitron-proxy.d08jp15rftr3s.us-east-2.cs.amazonlightsail.com${url.pathname}${url.search}`;
         const response = await fetch(targetUrl, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
