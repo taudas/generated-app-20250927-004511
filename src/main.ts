@@ -420,11 +420,11 @@ async function fetchNowPlaying() {
         if (currentShowName || currentPersonaName) {
           let showText = "";
           if (currentShowName && currentPersonaName) {
-            showText = `Show: ${currentShowName} · DJ: ${currentPersonaName}`;
+            showText = `On ${currentShowName} With ${currentPersonaName}`;
           } else if (currentShowName) {
-            showText = `Show: ${currentShowName}`;
+            showText = `On ${currentShowName}`;
           } else {
-            showText = `DJ: ${currentPersonaName}`;
+            showText = `With ${currentPersonaName}`;
           }
           if (showEl.textContent !== showText) {
             showEl.textContent = showText;
@@ -463,7 +463,7 @@ async function fetchNowPlaying() {
       }
       if (albumEl.textContent !== songAlbum) {
         if (songAlbum) {
-          albumEl.textContent = `Album: ${songAlbum}`;
+          albumEl.textContent = songAlbum;
           albumEl.classList.remove('hidden');
         } else {
           albumEl.classList.add('hidden');
