@@ -15,6 +15,10 @@
     {
       "pattern": "www.wcbn.stream",
       "custom_domain": true
+    },
+    {
+      "pattern": "archive.wcbn.stream",
+      "custom_domain": true
     }
   ]
 }

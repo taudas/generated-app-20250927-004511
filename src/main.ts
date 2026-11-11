@@ -31,6 +31,24 @@ let lastPlaylistId: number | null = null;
 let currentShowName = "";
 let currentPersonaName = "";
 
+// Archive State
+interface ArchiveShow {
+  id: string;
+  title: string;
+  showName: string;
+  djName: string;
+  dateStr: string;
+  timestamp: number;
+  src: string;
+  audioUrl: string;
+}
+
+let archiveShows: ArchiveShow[] = [];
+let currentSortOrder: 'time' | 'alpha' = 'time';
+let currentSearchQuery = "";
+let activePlayingArchiveId: string | null = null;
+let isArchiveLoaded = false;
+
 // Texture Loader & State
 const textureLoader = new THREE.TextureLoader();
 let currentArtUrl = "";
@@ -774,10 +792,197 @@ function setupUI() {
   });
 }
 
+// Routing & Archive View Controller
+function initRouting() {
+  const navArchiveBtn = document.getElementById('nav-archive-btn');
+  const navLiveBtn = document.getElementById('nav-live-btn');
+  const liveUi = document.querySelector('.ui-container') as HTMLElement;
+  const archiveUi = document.getElementById('archive-view') as HTMLElement;
+
+  function showLiveView(updateHistory = true) {
+    if (liveUi) liveUi.classList.remove('hidden');
+    if (archiveUi) archiveUi.classList.add('hidden');
+    if (updateHistory && window.location.pathname !== '/') {
+      history.pushState({}, '', '/');
+    }
+  }
+
+  function showArchiveView(updateHistory = true) {
+    if (liveUi) liveUi.classList.add('hidden');
+    if (archiveUi) archiveUi.classList.remove('hidden');
+    if (updateHistory && window.location.pathname !== '/archive') {
+      history.pushState({}, '', '/archive');
+    }
+    if (!isArchiveLoaded) {
+      fetchArchiveShows();
+    }
+  }
+
+  if (navArchiveBtn) {
+    navArchiveBtn.addEventListener('click', () => showArchiveView(true));
+  }
+
+  if (navLiveBtn) {
+    navLiveBtn.addEventListener('click', () => showLiveView(true));
+  }
+
+  window.addEventListener('popstate', () => {
+    const isArchiveRoute = window.location.hostname.startsWith('archive.') || window.location.pathname.startsWith('/archive');
+    if (isArchiveRoute) {
+      showArchiveView(false);
+    } else {
+      showLiveView(false);
+    }
+  });
+
+  // Initial route check
+  const isArchiveRoute = window.location.hostname.startsWith('archive.') || window.location.pathname.startsWith('/archive');
+  if (isArchiveRoute) {
+    showArchiveView(false);
+  }
+}
+
+async function fetchArchiveShows() {
+  const statusEl = document.getElementById('archive-status');
+  if (statusEl) statusEl.textContent = 'Fetching 2-week archive...';
+
+  try {
+    const res = await fetch('/api/archive');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (data && data.shows) {
+      archiveShows = data.shows;
+      isArchiveLoaded = true;
+      renderArchiveShows();
+    } else {
+      if (statusEl) statusEl.textContent = 'Failed to parse archive shows.';
+    }
+  } catch (e: any) {
+    console.error('Error loading archive:', e);
+    if (statusEl) statusEl.textContent = 'Could not load archive. Please try again.';
+  }
+}
+
+function renderArchiveShows() {
+  const statusEl = document.getElementById('archive-status');
+  const listEl = document.getElementById('archive-list');
+  if (!listEl) return;
+
+  let filtered = archiveShows.filter(show => {
+    if (!currentSearchQuery) return true;
+    const q = currentSearchQuery.toLowerCase();
+    return show.showName.toLowerCase().includes(q) ||
+           show.djName.toLowerCase().includes(q) ||
+           show.dateStr.toLowerCase().includes(q);
+  });
+
+  // Sort: 'time' (Most recent first) vs 'alpha' (Alphabetical A-Z)
+  if (currentSortOrder === 'time') {
+    filtered.sort((a, b) => b.timestamp - a.timestamp);
+  } else {
+    filtered.sort((a, b) => {
+      const cmp = a.showName.localeCompare(b.showName, undefined, { sensitivity: 'base' });
+      if (cmp !== 0) return cmp;
+      return b.timestamp - a.timestamp;
+    });
+  }
+
+  if (statusEl) {
+    statusEl.textContent = `Showing ${filtered.length} of ${archiveShows.length} archived shows (${currentSortOrder === 'time' ? 'Most Recent First' : 'Alphabetical'})`;
+  }
+
+  listEl.innerHTML = '';
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div class="archive-status">No shows found matching your search.</div>';
+    return;
+  }
+
+  filtered.forEach(show => {
+    const card = document.createElement('div');
+    const isPlayingThis = activePlayingArchiveId === show.id;
+    card.className = `archive-card ${isPlayingThis ? 'active' : ''}`;
+
+    card.innerHTML = `
+      <div class="archive-card-header">
+        <div class="archive-card-title">${show.showName || 'WCBN Show'}</div>
+        <span class="archive-card-badge">${isPlayingThis ? '▶ PLAYING' : 'LISTEN'}</span>
+      </div>
+      <div class="archive-card-dj">${show.djName ? 'With ' + show.djName : ''}</div>
+      <div class="archive-card-date">🕒 ${show.dateStr}</div>
+    `;
+
+    card.addEventListener('click', () => playArchiveShow(show));
+    listEl.appendChild(card);
+  });
+}
+
+function playArchiveShow(show: ArchiveShow) {
+  activePlayingArchiveId = show.id;
+  renderArchiveShows();
+
+  // Pause live stream audio if active
+  if (isPlaying && audio) {
+    audio.pause();
+    isPlaying = false;
+    playIcon.classList.remove('hidden');
+    pauseIcon.classList.add('hidden');
+    statusDot.className = 'pulse-dot idle';
+    statusText.textContent = 'OFFLINE';
+  }
+
+  const playerBar = document.getElementById('archive-player-bar')!;
+  const playerTitle = document.getElementById('archive-player-title')!;
+  const playerSub = document.getElementById('archive-player-sub')!;
+  const archiveAudio = document.getElementById('archive-audio') as HTMLAudioElement;
+
+  if (playerBar) playerBar.classList.remove('hidden');
+  if (playerTitle) playerTitle.textContent = show.showName;
+  if (playerSub) playerSub.textContent = `${show.djName ? 'With ' + show.djName + ' · ' : ''}${show.dateStr}`;
+
+  if (archiveAudio) {
+    archiveAudio.src = show.audioUrl;
+    archiveAudio.play().catch(err => console.warn('Archive playback error:', err));
+  }
+}
+
+function initArchiveControls() {
+  const searchInput = document.getElementById('archive-search') as HTMLInputElement;
+  const sortTimeBtn = document.getElementById('sort-time-btn');
+  const sortAlphaBtn = document.getElementById('sort-alpha-btn');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      currentSearchQuery = (e.target as HTMLInputElement).value;
+      renderArchiveShows();
+    });
+  }
+
+  if (sortTimeBtn) {
+    sortTimeBtn.addEventListener('click', () => {
+      currentSortOrder = 'time';
+      sortTimeBtn.classList.add('active');
+      if (sortAlphaBtn) sortAlphaBtn.classList.remove('active');
+      renderArchiveShows();
+    });
+  }
+
+  if (sortAlphaBtn) {
+    sortAlphaBtn.addEventListener('click', () => {
+      currentSortOrder = 'alpha';
+      sortAlphaBtn.classList.add('active');
+      if (sortTimeBtn) sortTimeBtn.classList.remove('active');
+      renderArchiveShows();
+    });
+  }
+}
+
 // Start Up
 window.addEventListener('DOMContentLoaded', () => {
   initThree();
   setupUI();
+  initRouting();
+  initArchiveControls();
   
   // Initial Spinitron fetch
   fetchNowPlaying();
