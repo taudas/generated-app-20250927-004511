@@ -11,7 +11,7 @@ export default {
     // Endpoint to fetch and parse 2-week WCBN show archive from floyd.wcbn.org
     if (url.pathname === "/api/archive") {
       try {
-        const archivePageUrl = "https://floyd.wcbn.org/listen/index.html";
+        const archivePageUrl = "http://floyd.wcbn.org/listen/index.html";
         const response = await fetch(archivePageUrl, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -37,14 +37,14 @@ export default {
           const src = match[1];
           const rawTitle = match[2];
 
-          const dateMatch = rawTitle.match(/^(.*?)-(\d{4})-(\d{2})-(\d{2})-(\d{4})$/);
+          const dateMatch = rawTitle.match(/^(.*)-(\d{4})-(\d{2})-(\d{2})-(\d{4})$/);
           let showDjPart = rawTitle;
           let dateStr = "";
           let timestamp = 0;
 
           if (dateMatch) {
-            showDjPart = dateMatch[1];
-            const [, y, m, d, hhmm] = dateMatch;
+            const [, showDj, y, m, d, hhmm] = dateMatch;
+            showDjPart = showDj;
             const hh = hhmm.substring(0, 2);
             const mm = hhmm.substring(2, 4);
             dateStr = `${y}-${m}-${d} ${hh}:${mm}`;
@@ -75,7 +75,7 @@ export default {
             dateStr,
             timestamp,
             src,
-            audioUrl: `https://floyd.wcbn.org/listen/${src}`
+            audioUrl: `/api/archive/stream?file=${encodeURIComponent(src)}`
           });
         }
 
@@ -94,6 +94,37 @@ export default {
             "Access-Control-Allow-Origin": "*",
           }
         });
+      }
+    }
+
+    // Endpoint to stream archive MP3 files over HTTPS to prevent mixed content & CORS issues
+    if (url.pathname === "/api/archive/stream") {
+      const fileName = url.searchParams.get("file");
+      if (!fileName) {
+        return new Response("Missing file param", { status: 400 });
+      }
+      try {
+        const audioTargetUrl = `http://floyd.wcbn.org/listen/${fileName}`;
+        const rangeHeader = request.headers.get("Range");
+        const headers: Record<string, string> = {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        };
+        if (rangeHeader) {
+          headers["Range"] = rangeHeader;
+        }
+
+        const response = await fetch(audioTargetUrl, { headers });
+        const responseHeaders = new Headers(response.headers);
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        responseHeaders.set("Cache-Control", "public, max-age=3600");
+
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: responseHeaders,
+        });
+      } catch (err: any) {
+        return new Response(err.message || "Failed to stream audio", { status: 500 });
       }
     }
 
