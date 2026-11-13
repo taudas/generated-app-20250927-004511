@@ -567,6 +567,16 @@ async function togglePlayback() {
   }
 
   if (!isPlaying) {
+    // Stop any active archive playback before starting live stream
+    const archiveAudio = document.getElementById('archive-audio') as HTMLAudioElement;
+    if (archiveAudio) {
+      archiveAudio.pause();
+    }
+    if (activePlayingArchiveId !== null) {
+      activePlayingArchiveId = null;
+      renderArchiveShows();
+    }
+
     // Play Stream
     statusDot.className = 'pulse-dot buffering';
     statusText.textContent = 'CONNECTING';
@@ -921,9 +931,10 @@ function playArchiveShow(show: ArchiveShow) {
   activePlayingArchiveId = show.id;
   renderArchiveShows();
 
-  // Pause live stream audio if active
-  if (isPlaying && audio) {
+  // Stop live stream audio if active
+  if (audio) {
     audio.pause();
+    audio.src = STREAM_URL;
     isPlaying = false;
     playIcon.classList.remove('hidden');
     pauseIcon.classList.add('hidden');
@@ -950,6 +961,22 @@ function initArchiveControls() {
   const searchInput = document.getElementById('archive-search') as HTMLInputElement;
   const sortTimeBtn = document.getElementById('sort-time-btn');
   const sortAlphaBtn = document.getElementById('sort-alpha-btn');
+  const archiveAudio = document.getElementById('archive-audio') as HTMLAudioElement;
+
+  if (archiveAudio) {
+    archiveAudio.addEventListener('play', () => {
+      // Automatically stop live stream if user starts archive audio
+      if (audio) {
+        audio.pause();
+        audio.src = STREAM_URL;
+        isPlaying = false;
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        statusDot.className = 'pulse-dot idle';
+        statusText.textContent = 'OFFLINE';
+      }
+    });
+  }
 
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
